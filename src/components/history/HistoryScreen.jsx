@@ -309,27 +309,43 @@ export function HistoryScreen() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {taskList.map(t => (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
-                  <button
-                    onClick={() => toggleTask(t.id)}
-                    style={{
-                      width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
-                      border: `2px solid ${t.completed ? 'var(--accent-green-400)' : 'var(--text-tertiary)'}`,
-                      backgroundColor: t.completed ? 'var(--accent-green-400)' : 'transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    {t.completed && <Check size={11} color="#fff" strokeWidth={3} />}
-                  </button>
-                  <span style={{ flex: 1, fontSize: '13px', color: t.completed ? 'var(--text-tertiary)' : 'var(--text-primary)', textDecoration: t.completed ? 'line-through' : 'none' }}>
-                    {t.title}
+                <div key={t.id} style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px', 
+                  padding: '8px 10px', 
+                  backgroundColor: 'var(--bg-tertiary)', 
+                  borderRadius: 'var(--radius-sm)',
+                  opacity: t.cancelled ? 0.6 : 1,
+                  borderLeft: t.cancelled ? '3px solid var(--status-danger)' : 'none'
+                }}>
+                  {!t.cancelled && (
+                    <button
+                      onClick={() => toggleTask(t.id)}
+                      style={{
+                        width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
+                        border: `2px solid ${t.completed ? 'var(--accent-green-400)' : 'var(--text-tertiary)'}`,
+                        backgroundColor: t.completed ? 'var(--accent-green-400)' : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      {t.completed && <Check size={11} color="#fff" strokeWidth={3} />}
+                    </button>
+                  )}
+                  <span style={{ 
+                    flex: 1, 
+                    fontSize: '13px', 
+                    color: t.completed ? 'var(--text-tertiary)' : t.cancelled ? 'var(--status-danger)' : 'var(--text-primary)', 
+                    textDecoration: t.completed ? 'line-through' : 'none' 
+                  }}>
+                    {t.title} {t.cancelled && '(Cancelled)'}
                   </span>
                   {t.completedAt && (
                     <span style={{ fontSize: '11px', color: 'var(--accent-green-400)' }}>
                       {new Date(t.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   )}
-                  <Badge color={getCategoryColor(t.category)}>{t.category}</Badge>
+                  <Badge color={t.cancelled ? 'var(--status-danger)' : getCategoryColor(t.category)}>{t.category}</Badge>
                 </div>
               ))}
             </div>

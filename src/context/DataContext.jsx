@@ -111,6 +111,7 @@ export function DataProvider({ children }) {
       createdAt: new Date().toISOString(),
       completed: false,
       completedAt: null,
+      cancelled: false,
       priority: taskInput.priority || 'Medium',
       category: taskInput.category || 'Study',
       reminder: taskInput.reminder || '',
@@ -128,6 +129,7 @@ export function DataProvider({ children }) {
           ...t,
           completed: nextCompleted,
           completedAt: nextCompleted ? new Date().toISOString() : null,
+          cancelled: false // Uncomplete sets cancelled back to false
         };
       }
       return t;
@@ -144,6 +146,56 @@ export function DataProvider({ children }) {
       return t;
     });
     updateData({ tasks: updatedTasks });
+  };
+
+  // Carry Forward Batch Action Processor
+  const batchCarryForwardTasks = (taskActionsMap, targetTodayDate) => {
+    const currentTasks = data.tasks || [];
+    const newTasksCreated = [];
+    const updatedExistingTasks = currentTasks.map(t => {
+      const action = taskActionsMap[t.id];
+      if (!action) return t;
+
+      if (action.type === 'cancel') {
+        // Mark original task as cancelled in history
+        return { ...t, cancelled: true };
+      }
+
+      if (action.type === 'today' || action.type === 'reschedule') {
+        const targetDate = action.type === 'today' ? targetTodayDate : action.date;
+        const originalDateParts = t.scheduledDate.split('-');
+        const formattedOrigDate = originalDateParts.length === 3
+          ? `${originalDateParts[2]}/${originalDateParts[1]}/${originalDateParts[0].slice(-2)}`
+          : t.scheduledDate;
+
+        // Create new rollover task
+        const rolledOverTask = {
+          id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          title: `[RollOver]: ${t.title} [${formattedOrigDate}]`,
+          scheduledDate: targetDate,
+          createdAt: new Date().toISOString(),
+          completed: false,
+          completedAt: null,
+          cancelled: false,
+          priority: t.priority || 'Medium',
+          category: t.category || 'Study',
+          reminder: t.reminder || '',
+          notes: t.notes || '',
+        };
+        newTasksCreated.push(rolledOverTask);
+
+        // Keep the original task as uncompleted, but mark it with metadata if needed
+        return { ...t, rolledOver: true };
+      }
+
+      return t;
+    });
+
+    // Update both states
+    updateData({ 
+      tasks: [...newTasksCreated, ...updatedExistingTasks],
+      profile: { ...data.profile, lastActiveDate: targetTodayDate }
+    });
   };
 
   // 4. Delete Task
@@ -276,6 +328,7 @@ export function DataProvider({ children }) {
         toggleTask,
         editTask,
         deleteTask,
+        batchCarryForwardTasks,
         addRoutine,
         editRoutine,
         deleteRoutine,

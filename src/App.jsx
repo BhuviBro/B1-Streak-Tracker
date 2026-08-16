@@ -10,16 +10,39 @@ import { SettingsScreen } from './components/settings/SettingsScreen';
 import { AddTaskModal } from './components/tasks/AddTaskModal';
 import { LoginScreen } from './components/common/LoginScreen';
 
+import { useData } from './context/DataContext';
+import { CarryForwardModal } from './components/common/CarryForwardModal';
+
 function MainRouter() {
   const { currentUser } = useAuth();
+  const { tasks, profile, batchCarryForwardTasks } = useData();
   const [demoMode, setDemoMode] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+
+  // Today tracker date constant matching app design
+  const todayStr = '2026-08-11'; 
 
   // Auth Guard: If user is not logged in and hasn't chosen Demo mode, show Login screen
   if (!currentUser && !demoMode) {
     return <LoginScreen onSkipDemo={() => setDemoMode(true)} />;
   }
+
+  // Scan for past incomplete tasks
+  const overdueIncompleteTasks = tasks.filter(t => {
+    // If task is completed or cancelled, ignore
+    if (t.completed || t.cancelled) return false;
+    // If task scheduledDate is in the past compared to todayStr, it is overdue
+    return t.scheduledDate < todayStr;
+  });
+
+  // Verify if popup check-in was already processed for today
+  const hasProcessedToday = profile.lastActiveDate === todayStr;
+  const showOverduePopup = !hasProcessedToday && overdueIncompleteTasks.length > 0;
+
+  const handleCarryForwardConfirm = (taskActions) => {
+    batchCarryForwardTasks(taskActions, todayStr);
+  };
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -41,6 +64,11 @@ function MainRouter() {
       <AddTaskModal
         isOpen={isAddTaskOpen}
         onClose={() => setIsAddTaskOpen(false)}
+      />
+      <CarryForwardModal
+        isOpen={showOverduePopup}
+        incompleteTasks={overdueIncompleteTasks}
+        onConfirm={handleCarryForwardConfirm}
       />
     </AppLayout>
   );
