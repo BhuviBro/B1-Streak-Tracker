@@ -1,0 +1,162 @@
+/* ==========================================
+   GitHub-Inspired Design Tokens & Styling System
+   ========================================== */
+
+:root {
+  /* Fonts */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  
+  /* GitHub Dark Theme Palette (Default) */
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
+  --bg-card: #161b22;
+  --bg-hover: #30363d;
+  
+  /* Text colors */
+  --text-primary: #f0f6fc;
+  --text-secondary: #8b949e;
+  --text-tertiary: #6e7681;
+  
+  /* Borders */
+  --border-color: #30363d;
+  --border-muted: #21262d;
+  
+  /* Accent Greens (GitHub Contribution Scale) */
+  --accent-green-500: #238636;
+  --accent-green-400: #2ea043;
+  --accent-green-hover: #3fb950;
+  
+  /* Contribution Levels (Dark Mode) */
+  --contrib-level-0: #161b22; /* Empty / Neutral */
+  --contrib-level-1: #0e4429; /* Light green */
+  --contrib-level-2: #006d32; /* Low-medium green */
+  --contrib-level-3: #26a641; /* Medium green */
+  --contrib-level-4: #39d353; /* Bright green */
+  --contrib-level-5: #56ff6a; /* Maximum intensity green */
+
+  /* Neutral State */
+  --contrib-neutral: #21262d;
+  
+  /* Status Colors */
+  --status-danger: #f85149;
+  --status-warning: #d29922;
+  --status-info: #58a6ff;
+  --status-routine: #a371f7;
+  
+  /* Layout Radius & Shadow */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+[data-theme="light"] {
+  /* GitHub Light Theme Palette */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f8fa;
+  --bg-tertiary: #eaeef2;
+  --bg-card: #ffffff;
+  --bg-hover: #f3f4f6;
+  
+  /* Text colors */
+  --text-primary: #1f2328;
+  --text-secondary: #656d76;
+  --text-tertiary: #8c959f;
+  
+  /* Borders */
+  --border-color: #d0d7de;
+  --border-muted: #e1e4e8;
+  
+  /* Contribution Levels (Light Mode) */
+  --contrib-level-0: #ebedf0; /* Empty / Neutral */
+  --contrib-level-1: #9be9a8; /* Light green */
+  --contrib-level-2: #40c463; /* Low-medium green */
+  --contrib-level-3: #30a14e; /* Medium green */
+  --contrib-level-4: #216e39; /* Dark green */
+  --contrib-level-5: #114e25; /* Deepest green */
+
+  --contrib-neutral: #e1e4e8;
+}
+
+/* Global Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  position: relative;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Interactive Utility Classes */
+.card-hover:hover {
+  border-color: var(--text-tertiary) !important;
+  transform: translateY(-1px);
+}
+
+.input-field {
+  width: 100%;
+  padding: 10px 14px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input-field:focus {
+  border-color: var(--accent-green-400);
+  box-shadow: 0 0 0 2px rgba(46, 160, 67, 0.2);
+}
+
