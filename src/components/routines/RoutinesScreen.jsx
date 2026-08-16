@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';

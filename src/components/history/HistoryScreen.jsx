@@ -395,9 +395,11 @@ export function HistoryScreen() {
             <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '12px' }}>
               No activity scheduled for this day.
             </p>
-            <Button variant="secondary" size="sm" icon={Plus} onClick={() => setShowAddTask(true)}>
-              Add Task for This Date
-            </Button>
+            {(isFutureDate || isTodayDate) && (
+              <Button variant="secondary" size="sm" icon={Plus} onClick={() => setShowAddTask(true)}>
+                Add Task for This Date
+              </Button>
+            )}
           </div>
         )}
       </Card>
