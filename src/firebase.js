@@ -3,7 +3,8 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { 
   initializeFirestore, 
   persistentLocalCache, 
-  persistentMultipleTabManager 
+  persistentMultipleTabManager,
+  memoryLocalCache
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -22,10 +23,20 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 
-// 3. Initialize Firestore with Modern Persistent Cache settings (safe for redirects & multiple tabs)
-export const db = initializeFirestore(app, {
-  cache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-  }),
-});
+// 3. Initialize Firestore with dynamic cache configuration (uses IndexedDB, falls back to memory on error)
+let firestoreDb;
+try {
+  firestoreDb = initializeFirestore(app, {
+    cache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager(),
+    }),
+  });
+} catch (e) {
+  console.warn("IndexedDB persistent cache failed to initialize, falling back to memory cache:", e);
+  firestoreDb = initializeFirestore(app, {
+    cache: memoryLocalCache(),
+  });
+}
+
+export const db = firestoreDb;
 
