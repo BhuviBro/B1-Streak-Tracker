@@ -22,9 +22,15 @@ export function DataProvider({ children }) {
       }
     }
     return {
-      profile: INITIAL_MOCK_USER,
-      tasks: INITIAL_MOCK_TASKS,
-      routines: INITIAL_MOCK_ROUTINES,
+      profile: {
+        name: "Guest User",
+        email: "guest@example.com",
+        avatar: "",
+        ongoingStreak: 0,
+        timeRemainingToday: "8h 0m",
+      },
+      tasks: [],
+      routines: [],
       categories: INITIAL_MOCK_CATEGORIES,
       timeCommitments: INITIAL_MOCK_TIME_COMMITMENTS,
     };
@@ -54,8 +60,8 @@ export function DataProvider({ children }) {
               ongoingStreak: 0,
               timeRemainingToday: '8h 0m',
             },
-            tasks: INITIAL_MOCK_TASKS,
-            routines: INITIAL_MOCK_ROUTINES,
+            tasks: [],
+            routines: [],
             categories: INITIAL_MOCK_CATEGORIES,
             timeCommitments: INITIAL_MOCK_TIME_COMMITMENTS,
           };
