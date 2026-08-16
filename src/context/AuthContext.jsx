@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
-  signInWithRedirect, 
-  getRedirectResult,
+  signInWithPopup, 
   signOut as firebaseSignOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
@@ -13,16 +12,13 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [isRedirecting, setIsRedirecting] = useState(false);
-
-  // Google Sign In redirect handler
+  // Google Sign In handler using popup (safely bypasses reload redirect loop reset triggers)
   const loginWithGoogle = async () => {
     try {
-      setIsRedirecting(true);
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      return result.user;
     } catch (error) {
-      console.error('Error signing in with Google redirect:', error);
-      setIsRedirecting(false);
+      console.error('Error signing in with Google popup:', error);
       throw error;
     }
   };
@@ -45,41 +41,17 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    let isMounted = true;
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setLoading(false);
+    });
 
-    // Resolve redirect result
-    const checkRedirect = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result?.user && isMounted) {
-          setCurrentUser(result.user);
-        }
-      } catch (error) {
-        console.error("Error resolving redirect result: ", error);
-      } finally {
-        if (isMounted) {
-          // Verify actual auth state change
-          const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (isMounted) {
-              setCurrentUser(user);
-              setLoading(false);
-            }
-          });
-          return unsubscribe;
-        }
-      }
-    };
-
-    checkRedirect();
-
-    return () => {
-      isMounted = false;
-    };
+    return unsubscribe;
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, isRedirecting, loginWithGoogle, logout }}>
-      {loading || isRedirecting ? (
+    <AuthContext.Provider value={{ currentUser, loading, loginWithGoogle, logout }}>
+      {loading ? (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-secondary)'
