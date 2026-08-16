@@ -13,12 +13,16 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
   // Google Sign In redirect handler
   const loginWithGoogle = async () => {
     try {
+      setIsRedirecting(true);
       await signInWithRedirect(auth, provider);
     } catch (error) {
       console.error('Error signing in with Google redirect:', error);
+      setIsRedirecting(false);
       throw error;
     }
   };
@@ -43,7 +47,8 @@ export function AuthProvider({ children }) {
 
     let isMounted = true;
 
-    const resolveRedirect = async () => {
+    // Resolve redirect result
+    const checkRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result?.user && isMounted) {
@@ -52,28 +57,29 @@ export function AuthProvider({ children }) {
       } catch (error) {
         console.error("Error resolving redirect result: ", error);
       } finally {
-        // Authenticate state listener
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          if (isMounted) {
-            setCurrentUser(user);
-            setLoading(false);
-          }
-        });
-        return unsubscribe;
+        if (isMounted) {
+          // Verify actual auth state change
+          const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (isMounted) {
+              setCurrentUser(user);
+              setLoading(false);
+            }
+          });
+          return unsubscribe;
+        }
       }
     };
 
-    const unsubPromise = resolveRedirect();
+    checkRedirect();
 
     return () => {
       isMounted = false;
-      unsubPromise.then(unsub => unsub && unsub());
     };
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, loginWithGoogle, logout }}>
-      {loading ? (
+    <AuthContext.Provider value={{ currentUser, loading, isRedirecting, loginWithGoogle, logout }}>
+      {loading || isRedirecting ? (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-secondary)'
