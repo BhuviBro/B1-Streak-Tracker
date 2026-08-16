@@ -1,6 +1,10 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { 
+  initializeFirestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager 
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,18 +18,14 @@ const firebaseConfig = {
 // 1. Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 
-// 2. Export Auth & Firestore instances
+// 2. Export Auth instance
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
-export const db = getFirestore(app);
 
-// 3. Enable Offline Persistence (IndexedDB)
-if (typeof window !== 'undefined') {
-  enableIndexedDbPersistence(db).catch(err => {
-    if (err.code === 'failed-precondition') {
-      console.warn('Multiple tabs open — offline persistence disabled');
-    } else if (err.code === 'unimplemented') {
-      console.warn('Browser does not support offline persistence');
-    }
-  });
-}
+// 3. Initialize Firestore with Modern Persistent Cache settings (safe for redirects & multiple tabs)
+export const db = initializeFirestore(app, {
+  cache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+});
+
