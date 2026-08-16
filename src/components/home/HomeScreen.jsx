@@ -2,8 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { GitHubCalendar } from './GitHubCalendar';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
+import { Modal } from '../common/Modal';
+import { Button } from '../common/Button';
 import { useData } from '../../context/DataContext';
-import { Flame, Clock, BarChart3, CalendarDays } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Flame, Clock, BarChart3, CalendarDays, FileText, Edit2 } from 'lucide-react';
 
 function getTimeRemaining() {
   const now = new Date();
@@ -165,9 +168,14 @@ function CategoryGraph({ tasks, routines, categories }) {
 export function HomeScreen({ onNavigate }) {
   const [calView, setCalView] = useState('monthly');
   const [showInsights, setShowInsights] = useState(false);
-  const { profile: user, tasks, routines, categories, toggleTask, toggleRoutineCompletion: toggleRoutineOccurrence } = useData();
+  const { profile: user, tasks, routines, categories, toggleTask, toggleRoutineCompletion: toggleRoutineOccurrence, editTask } = useData();
   const [timeLeft, setTimeLeft] = useState(getTimeRemaining());
   const [currentTime, setCurrentTime] = useState(getCurrentTime());
+  
+  // Notes Modal state management
+  const [activeNotesTask, setActiveNotesTask] = useState(null);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [editingNotesText, setEditingNotesText] = useState('');
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -186,6 +194,20 @@ export function HomeScreen({ onNavigate }) {
   const getCategoryColor = (catName) => {
     const cat = categories.find(c => c.name === catName);
     return cat ? cat.color : '#8b949e';
+  };
+
+  const handleOpenNotes = (task) => {
+    setActiveNotesTask(task);
+    setEditingNotesText(task.notes || '');
+    setIsEditingNotes(false);
+  };
+
+  const handleSaveNotes = () => {
+    if (activeNotesTask) {
+      editTask(activeNotesTask.id, { notes: editingNotesText.trim() });
+      setActiveNotesTask(prev => ({ ...prev, notes: editingNotesText.trim() }));
+      setIsEditingNotes(false);
+    }
   };
 
 
@@ -333,11 +355,40 @@ export function HomeScreen({ onNavigate }) {
                 }}>
                   {task.title}
                 </p>
-                {task.completed && task.completedAt && (
-                  <p style={{ fontSize: '11px', color: 'var(--accent-green-400)', marginTop: '2px' }}>
-                    Completed at {new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                  {task.completed && task.completedAt && (
+                    <span style={{ fontSize: '11px', color: 'var(--accent-green-400)' }}>
+                      Completed at {new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                  {task.completed && task.completedAt && task.notes && (
+                    <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: 'var(--text-tertiary)' }} />
+                  )}
+                  {task.notes && (
+                    <button
+                      onClick={() => handleOpenNotes(task)}
+                      style={{
+                        background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-tertiary)',
+                        fontSize: '11px', fontWeight: 600
+                      }}
+                    >
+                      <FileText size={10} /> Notes
+                    </button>
+                  )}
+                  {!task.notes && (
+                    <button
+                      onClick={() => handleOpenNotes(task)}
+                      style={{
+                        background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-tertiary)',
+                        fontSize: '11px', opacity: 0.5
+                      }}
+                    >
+                      <Plus size={10} /> Add Note
+                    </button>
+                  )}
+                </div>
               </div>
               <Badge color={getCategoryColor(task.category)}>{task.category}</Badge>
             </div>
@@ -345,7 +396,8 @@ export function HomeScreen({ onNavigate }) {
 
           {/* Routine Occurrences */}
           {todayRoutines.map(routine => {
-            const done = routine.completions?.[todayStr];
+            const doneObj = routine.completions?.[todayStr];
+            const done = doneObj === true || (doneObj && doneObj.completed === true);
             return (
               <div key={routine.id}
                 style={{
@@ -379,17 +431,79 @@ export function HomeScreen({ onNavigate }) {
                   }}>
                     {routine.title}
                   </p>
-                  <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>
-                    🔥 {routine.currentStreak} day streak
-                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
+                      🔥 {routine.currentStreak} day streak
+                    </span>
+                    {done && doneObj && doneObj.completedAt && (
+                      <>
+                        <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: 'var(--text-tertiary)' }} />
+                        <span style={{ fontSize: '11px', color: 'var(--accent-green-400)' }}>
+                          Completed at {new Date(doneObj.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <Badge variant="routine">Routine</Badge>
+                <Badge color={getCategoryColor(routine.category)}>{routine.category || 'Routine'}</Badge>
               </div>
             );
           })}
         </div>
       </div>
 
+
+      {/* Notes Dialog Modal */}
+      {activeNotesTask && (
+        <Modal
+          isOpen={!!activeNotesTask}
+          onClose={() => setActiveNotesTask(null)}
+          title={`Task Note: ${activeNotesTask.title}`}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {isEditingNotes ? (
+              <>
+                <textarea
+                  className="input-field"
+                  value={editingNotesText}
+                  onChange={(e) => setEditingNotesText(e.target.value)}
+                  placeholder="Type task details here..."
+                  rows={4}
+                  style={{ resize: 'none', lineHeight: '1.5' }}
+                  autoFocus
+                />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button variant="primary" fullWidth onClick={handleSaveNotes}>
+                    Save Note
+                  </Button>
+                  <Button variant="secondary" fullWidth onClick={() => setIsEditingNotes(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{
+                  padding: '14px', backgroundColor: 'var(--bg-tertiary)',
+                  borderRadius: 'var(--radius-sm)', minHeight: '80px',
+                  color: activeNotesTask.notes ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  fontSize: '13px', lineHeight: '1.6', whiteSpace: 'pre-wrap'
+                }}>
+                  {activeNotesTask.notes || 'No notes added to this task.'}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button variant="secondary" fullWidth icon={Edit2} onClick={() => setIsEditingNotes(true)}>
+                    Edit Note
+                  </Button>
+                  <Button variant="secondary" fullWidth onClick={() => setActiveNotesTask(null)}>
+                    Close
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </Modal>
+      )}
 
       {/* Bottom spacer */}
       <div style={{ height: '8px' }} />

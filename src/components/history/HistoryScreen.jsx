@@ -359,7 +359,8 @@ export function HistoryScreen() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {routineList.map(r => {
-                const done = r.completions?.[selectedDate];
+                const doneObj = r.completions?.[selectedDate];
+                const done = doneObj === true || (doneObj && doneObj.completed === true);
                 return (
                   <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--status-routine)' }}>
                     <button
@@ -373,10 +374,17 @@ export function HistoryScreen() {
                     >
                       {done && <Check size={11} color="#fff" strokeWidth={3} />}
                     </button>
-                    <span style={{ flex: 1, fontSize: '13px', color: done ? 'var(--text-tertiary)' : 'var(--text-primary)', textDecoration: done ? 'line-through' : 'none' }}>
-                      {r.title}
-                    </span>
-                    <Badge variant="routine">Routine</Badge>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: '13px', color: done ? 'var(--text-tertiary)' : 'var(--text-primary)', textDecoration: done ? 'line-through' : 'none' }}>
+                        {r.title}
+                      </span>
+                      {done && doneObj && doneObj.completedAt && (
+                        <p style={{ fontSize: '11px', color: 'var(--accent-green-400)', marginTop: '2px' }}>
+                          Completed at {new Date(doneObj.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
+                    <Badge color={getCategoryColor(r.category)}>{r.category || 'Routine'}</Badge>
                   </div>
                 );
               })}

@@ -42,7 +42,8 @@ function RoutineCalendar({ routine }) {
           const isAfterGoal = cellDate > goalDate;
           const isFuture = cellDate > today;
           const isToday = dateStr === '2026-08-11';
-          const done = routine.completions?.[dateStr];
+          const doneObj = routine.completions?.[dateStr];
+          const done = doneObj === true || (doneObj && doneObj.completed === true);
 
           let bg = 'var(--contrib-neutral)';
           let textColor = 'var(--text-tertiary)';
@@ -54,10 +55,10 @@ function RoutineCalendar({ routine }) {
           } else if (isFuture) {
             bg = 'var(--bg-tertiary)';
             textColor = 'var(--text-secondary)';
-          } else if (done === true) {
+          } else if (done) {
             bg = 'var(--contrib-level-4)';
             textColor = '#fff';
-          } else if (done === false) {
+          } else if (doneObj === false) {
             bg = 'rgba(248, 81, 73, 0.25)';
             textColor = '#f85149';
           }

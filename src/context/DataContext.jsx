@@ -212,8 +212,17 @@ export function DataProvider({ children }) {
     const updatedRoutines = (data.routines || []).map((r) => {
       if (r.id === routineId) {
         const completions = { ...(r.completions || {}) };
-        const nextState = !completions[dateStr];
-        completions[dateStr] = nextState;
+        const isCurrentTrue = completions[dateStr] === true || (completions[dateStr] && completions[dateStr].completed === true);
+        const nextState = !isCurrentTrue;
+
+        if (nextState) {
+          completions[dateStr] = {
+            completed: true,
+            completedAt: new Date().toISOString()
+          };
+        } else {
+          completions[dateStr] = false;
+        }
 
         // Recalculate streak & counts dynamically
         const dates = Object.keys(completions).sort();
@@ -223,7 +232,8 @@ export function DataProvider({ children }) {
         let missedDays = 0;
 
         dates.forEach((d) => {
-          if (completions[d]) {
+          const isDone = completions[d] === true || (completions[d] && completions[d].completed === true);
+          if (isDone) {
             completedDays += 1;
             currentStreak += 1;
             if (currentStreak > bestStreak) bestStreak = currentStreak;
@@ -252,6 +262,7 @@ export function DataProvider({ children }) {
     const newRoutine = {
       id: `routine-${Date.now()}`,
       title: routineInput.title,
+      category: routineInput.category || 'Study',
       startDate: routineInput.startDate || new Date().toISOString().split('T')[0],
       goalDate: routineInput.goalDate || '',
       status: 'active',
