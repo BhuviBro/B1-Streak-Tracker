@@ -41,27 +41,34 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    try {
-      // Resolve redirect result
-      getRedirectResult(auth)
-        .then((result) => {
-          if (result?.user) {
-            setCurrentUser(result.user);
-          }
-        })
-        .catch((error) => {
-          console.error("Error resolving redirect result: ", error);
-        });
+    let isMounted = true;
 
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setCurrentUser(user);
-        setLoading(false);
-      });
-      return unsubscribe;
-    } catch (e) {
-      console.error("Firebase Auth failed to initialize: ", e);
-      setLoading(false);
-    }
+    const resolveRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user && isMounted) {
+          setCurrentUser(result.user);
+        }
+      } catch (error) {
+        console.error("Error resolving redirect result: ", error);
+      } finally {
+        // Authenticate state listener
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (isMounted) {
+            setCurrentUser(user);
+            setLoading(false);
+          }
+        });
+        return unsubscribe;
+      }
+    };
+
+    const unsubPromise = resolveRedirect();
+
+    return () => {
+      isMounted = false;
+      unsubPromise.then(unsub => unsub && unsub());
+    };
   }, []);
 
   return (
