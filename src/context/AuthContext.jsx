@@ -34,17 +34,35 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
+    // If Firebase isn't configured, turn off loading state to allow Guest/Demo mode
+    if (!import.meta.env.VITE_FIREBASE_API_KEY) {
+      console.warn("Firebase credentials missing from .env. Running in Offline/Demo Mode.");
       setLoading(false);
-    });
+      return;
+    }
 
-    return unsubscribe;
+    try {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setCurrentUser(user);
+        setLoading(false);
+      });
+      return unsubscribe;
+    } catch (e) {
+      console.error("Firebase Auth failed to initialize: ", e);
+      setLoading(false);
+    }
   }, []);
 
   return (
     <AuthContext.Provider value={{ currentUser, loading, loginWithGoogle, logout }}>
-      {!loading && children}
+      {loading ? (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-secondary)'
+        }}>
+          Loading Tracker...
+        </div>
+      ) : children}
     </AuthContext.Provider>
   );
 }

@@ -34,41 +34,45 @@ export function DataProvider({ children }) {
 
   // Sync to Firestore when user is authenticated
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || !import.meta.env.VITE_FIREBASE_API_KEY) return;
 
-    const userDocRef = doc(db, 'users', currentUser.uid, 'data', 'main');
-    setIsSyncing(true);
+    try {
+      const userDocRef = doc(db, 'users', currentUser.uid, 'data', 'main');
+      setIsSyncing(true);
 
-    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const firestoreData = docSnap.data();
-        setData(firestoreData);
-        localStorage.setItem(LOCAL_STORAGE_CACHE_KEY, JSON.stringify(firestoreData));
-      } else {
-        const initialData = {
-          profile: {
-            name: currentUser.displayName || 'User',
-            email: currentUser.email || '',
-            avatar: currentUser.photoURL || '',
-            ongoingStreak: 0,
-            timeRemainingToday: '8h 0m',
-          },
-          tasks: INITIAL_MOCK_TASKS,
-          routines: INITIAL_MOCK_ROUTINES,
-          categories: INITIAL_MOCK_CATEGORIES,
-          timeCommitments: INITIAL_MOCK_TIME_COMMITMENTS,
-        };
-        setDoc(userDocRef, initialData, { merge: true });
-        setData(initialData);
-        localStorage.setItem(LOCAL_STORAGE_CACHE_KEY, JSON.stringify(initialData));
-      }
-      setIsSyncing(false);
-    }, (error) => {
-      console.error('Firestore sync error (falling back to offline cache):', error);
-      setIsSyncing(false);
-    });
+      const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const firestoreData = docSnap.data();
+          setData(firestoreData);
+          localStorage.setItem(LOCAL_STORAGE_CACHE_KEY, JSON.stringify(firestoreData));
+        } else {
+          const initialData = {
+            profile: {
+              name: currentUser.displayName || 'User',
+              email: currentUser.email || '',
+              avatar: currentUser.photoURL || '',
+              ongoingStreak: 0,
+              timeRemainingToday: '8h 0m',
+            },
+            tasks: INITIAL_MOCK_TASKS,
+            routines: INITIAL_MOCK_ROUTINES,
+            categories: INITIAL_MOCK_CATEGORIES,
+            timeCommitments: INITIAL_MOCK_TIME_COMMITMENTS,
+          };
+          setDoc(userDocRef, initialData, { merge: true });
+          setData(initialData);
+          localStorage.setItem(LOCAL_STORAGE_CACHE_KEY, JSON.stringify(initialData));
+        }
+        setIsSyncing(false);
+      }, (error) => {
+        console.error('Firestore sync error (falling back to offline cache):', error);
+        setIsSyncing(false);
+      });
 
-    return unsubscribe;
+      return unsubscribe;
+    } catch (e) {
+      console.error('Failed to initialize Firestore listener: ', e);
+    }
   }, [currentUser]);
 
   // Helper to persist state to local state + localStorage + Cloud Firestore
