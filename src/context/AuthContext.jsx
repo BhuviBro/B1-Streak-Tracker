@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   signInWithRedirect, 
+  getRedirectResult,
   signOut as firebaseSignOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
@@ -41,6 +42,17 @@ export function AuthProvider({ children }) {
     }
 
     try {
+      // Resolve redirect result
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result?.user) {
+            setCurrentUser(result.user);
+          }
+        })
+        .catch((error) => {
+          console.error("Error resolving redirect result: ", error);
+        });
+
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         setCurrentUser(user);
         setLoading(false);
