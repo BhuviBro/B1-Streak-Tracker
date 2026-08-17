@@ -10,10 +10,10 @@ const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 function pad(n) { return String(n).padStart(2, '0'); }
 
 export function CustomDatePicker({ value, onChange, minDate, maxDate }) {
-  // Parse incoming value or default to 2026-08-11
-  const initialDate = value ? new Date(`${value}T00:00:00`) : new Date('2026-08-11T00:00:00');
-  const [currentYear, setCurrentYear] = useState(initialDate.getFullYear() || 2026);
-  const [currentMonth, setCurrentMonth] = useState(initialDate.getMonth() || 7); // 7 = August
+  // Parse incoming value or default to current date
+  const initialDate = value ? new Date(`${value}T00:00:00`) : new Date();
+  const [currentYear, setCurrentYear] = useState(initialDate.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(initialDate.getMonth());
 
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
@@ -128,7 +128,10 @@ export function CustomDatePicker({ value, onChange, minDate, maxDate }) {
 
           const dateStr = `${currentYear}-${pad(currentMonth + 1)}-${pad(day)}`;
           const isSelected = value === dateStr;
-          const isToday = dateStr === '2026-08-11';
+          const isToday = dateStr === (() => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          })();
 
           return (
             <button

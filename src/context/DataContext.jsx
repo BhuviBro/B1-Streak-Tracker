@@ -312,6 +312,11 @@ export function DataProvider({ children }) {
     updateData({ categories: [...(data.categories || []), newCat] });
   };
 
+  const deleteCategory = (catId) => {
+    const updatedCategories = (data.categories || []).filter(c => c.id !== catId);
+    updateData({ categories: updatedCategories });
+  };
+
   const addTimeCommitment = (commitment) => {
     const newCommitment = {
       id: `time-${Date.now()}`,
@@ -346,6 +351,7 @@ export function DataProvider({ children }) {
         toggleRoutineStatus,
         toggleRoutineCompletion,
         addCategory,
+        deleteCategory,
         addTimeCommitment,
         deleteTimeCommitment,
         updateData,

@@ -15,23 +15,26 @@ function pad(n) { return String(n).padStart(2, '0'); }
 function getDaysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDay(y, m)    { return new Date(y, m, 1).getDay(); }
 
-const todayStr = '2026-08-11';
+const todayStr = (() => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+})();
 
 export function HistoryScreen() {
   const { tasks, routines, categories, toggleTask, toggleRoutineCompletion: toggleRoutineOccurrence } = useData();
   const [calView, setCalView] = useState('monthly');
 
   // Monthly nav state
-  const [mYear, setMYear]   = useState(2026);
-  const [mMonth, setMMonth] = useState(7); // August = index 7
+  const [mYear, setMYear]   = useState(new Date().getFullYear());
+  const [mMonth, setMMonth] = useState(new Date().getMonth());
 
   // Weekly nav state
   const [weekOffset, setWeekOffset] = useState(0);
 
   // Yearly nav state
-  const [yYear, setYYear] = useState(2026);
+  const [yYear, setYYear] = useState(new Date().getFullYear());
 
-  const [selectedDate, setSelectedDate] = useState('2026-08-11');
+  const [selectedDate, setSelectedDate] = useState(todayStr);
   const [showAddTask,  setShowAddTask]  = useState(false);
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -148,7 +151,7 @@ export function HistoryScreen() {
   // ─── Weekly Calendar ─────────────────────────────────────────────────────────
 
   const renderWeeklyCalendar = () => {
-    const base = new Date('2026-08-11');
+    const base = new Date();
     base.setDate(base.getDate() - base.getDay() + weekOffset * 7);
     const week = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(base);

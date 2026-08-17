@@ -9,10 +9,21 @@ import { Plus, Flame, ChevronRight, Calendar } from 'lucide-react';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-function pad(n) { return String(n).padStart(2, '0'); }
+const getTodayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const getFutureDateStr = (days) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const pad = (n) => String(n).padStart(2, '0');
 
 function RoutineCalendar({ routine }) {
-  const today = new Date('2026-08-11');
+  const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -41,7 +52,7 @@ function RoutineCalendar({ routine }) {
           const isBeforeStart = cellDate < startDate;
           const isAfterGoal = cellDate > goalDate;
           const isFuture = cellDate > today;
-          const isToday = dateStr === '2026-08-11';
+          const isToday = dateStr === getTodayStr();
           const doneObj = routine.completions?.[dateStr];
           const done = doneObj === true || (doneObj && doneObj.completed === true);
 
@@ -89,9 +100,20 @@ function RoutineCalendar({ routine }) {
 function RoutineDetailsModal({ routine, onClose }) {
   const { categories, toggleRoutineStatus, editRoutine, deleteRoutine } = useData();
   const [editingGoal, setEditingGoal] = useState(false);
-  const [newGoal, setNewGoal] = useState(routine?.goalDate || '2026-09-11');
+  const [newGoal, setNewGoal] = useState(routine?.goalDate || getFutureDateStr(30));
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   if (!routine) return null;
+
+  const handleDeleteClick = () => {
+    setShowConfirmDelete(true);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteRoutine(routine.id);
+    setShowConfirmDelete(false);
+    onClose();
+  };
   const totalDays = routine.completedDays + routine.missedDays + routine.daysRemaining;
   const progress = totalDays > 0 ? routine.completedDays / totalDays : 0;
 
@@ -184,11 +206,33 @@ function RoutineDetailsModal({ routine, onClose }) {
           <Button variant="secondary" fullWidth onClick={() => setEditingGoal(!editingGoal)}>
             Edit Goal
           </Button>
-          <Button variant="danger" fullWidth onClick={handleDelete}>
+          <Button variant="danger" fullWidth onClick={handleDeleteClick}>
             Delete
           </Button>
         </div>
       </div>
+
+      {showConfirmDelete && (
+        <Modal
+          isOpen={showConfirmDelete}
+          onClose={() => setShowConfirmDelete(false)}
+          title="Delete Routine"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+              Are you sure you want to delete the routine <strong>"{routine.title}"</strong>? This will permanently remove its completion history and streaks.
+            </p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button variant="danger" fullWidth onClick={handleConfirmDelete}>
+                Yes, Delete
+              </Button>
+              <Button variant="secondary" fullWidth onClick={() => setShowConfirmDelete(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </Modal>
   );
 }
@@ -200,8 +244,8 @@ export function RoutinesScreen() {
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState(categories[0]?.name || 'Coding');
-  const [startDate, setStartDate] = useState('2026-08-11');
-  const [goalDate, setGoalDate] = useState('2026-09-11');
+  const [startDate, setStartDate] = useState(getTodayStr());
+  const [goalDate, setGoalDate] = useState(getFutureDateStr(30));
   const [activeDateTab, setActiveDateTab] = useState('goal'); // 'start' | 'goal'
 
   const getCategoryColor = (catName) => {

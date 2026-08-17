@@ -8,6 +8,11 @@ import { Calendar, Trash2, CheckCircle2 } from 'lucide-react';
 
 export function CarryForwardModal({ isOpen, incompleteTasks, onConfirm }) {
   const [actions, setActions] = useState({});
+  const tomorrowStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
 
   if (!isOpen || incompleteTasks.length === 0) return null;
 
@@ -78,7 +83,7 @@ export function CarryForwardModal({ isOpen, incompleteTasks, onConfirm }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleActionChange(task.id, 'reschedule', currentAction.date || '2026-08-12')}
+                  onClick={() => handleActionChange(task.id, 'reschedule', currentAction.date || tomorrowStr)}
                   style={{
                     flex: 1, padding: '8px 6px', borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                     border: `1px solid ${currentAction.type === 'reschedule' ? 'var(--accent-green-400)' : 'var(--border-color)'}`,
@@ -111,7 +116,7 @@ export function CarryForwardModal({ isOpen, incompleteTasks, onConfirm }) {
                     Select target date:
                   </label>
                   <CustomDatePicker
-                    value={currentAction.date || '2026-08-12'}
+                    value={currentAction.date || tomorrowStr}
                     onChange={(newDate) => handleActionChange(task.id, 'reschedule', newDate)}
                   />
                 </div>

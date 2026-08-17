@@ -6,7 +6,7 @@ import { Modal } from '../common/Modal';
 import { useTheme } from '../../context/ThemeContext';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { User, Moon, Sun, Tag, Bell, Database, Info, LogOut, Plus, Trash2, ChevronRight } from 'lucide-react';
+import { User, Moon, Sun, Tag, Bell, Database, Info, LogOut, Plus, Trash2, ChevronRight, X } from 'lucide-react';
 
 function ProfileSection() {
   const { profile: user, updateData } = useData();
@@ -88,10 +88,11 @@ function AppearanceSection() {
 }
 
 function CategoriesSection() {
-  const { categories, addCategory } = useData();
+  const { categories, addCategory, deleteCategory } = useData();
   const [showAdd, setShowAdd] = useState(false);
   const [catName, setCatName] = useState('');
   const [catColor, setCatColor] = useState('#2ea043');
+  const [catToDelete, setCatToDelete] = useState(null);
 
   const presetColors = ['#2ea043', '#58a6ff', '#f85149', '#d29922', '#a371f7', '#f0883e', '#39d353'];
 
@@ -102,6 +103,13 @@ function CategoriesSection() {
     setShowAdd(false);
   };
 
+  const handleDeleteConfirm = () => {
+    if (catToDelete) {
+      deleteCategory(catToDelete.id);
+      setCatToDelete(null);
+    }
+  };
+
   return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
@@ -110,13 +118,40 @@ function CategoriesSection() {
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
         {categories.map(cat => (
-          <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: 'var(--radius-full)', backgroundColor: `${cat.color}20`, border: `1px solid ${cat.color}40` }}>
+          <div 
+            key={cat.id} 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              padding: '5px 10px 5px 12px', 
+              borderRadius: 'var(--radius-full)', 
+              backgroundColor: `${cat.color}20`, 
+              border: `1px solid ${cat.color}40` 
+            }}
+          >
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: cat.color, flexShrink: 0 }} />
             <span style={{ fontSize: '13px', color: cat.color, fontWeight: 600 }}>{cat.name}</span>
+            {categories.length > 1 && (
+              <button
+                onClick={() => setCatToDelete(cat)}
+                style={{
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', color: cat.color, opacity: 0.6,
+                  transition: 'opacity 0.15s ease'
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                onMouseLeave={e => e.currentTarget.style.opacity = 0.6}
+                title={`Delete ${cat.name}`}
+              >
+                <X size={12} />
+              </button>
+            )}
           </div>
         ))}
       </div>
 
+      {/* Add Category Modal */}
       <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add Category">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
@@ -142,6 +177,30 @@ function CategoriesSection() {
           <Button variant="primary" fullWidth disabled={!catName.trim()} onClick={handleAdd}>Save Category</Button>
         </div>
       </Modal>
+
+      {/* Delete Category Confirmation Modal */}
+      {catToDelete && (
+        <Modal
+          isOpen={!!catToDelete}
+          onClose={() => setCatToDelete(null)}
+          title="Delete Category"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+              Are you sure you want to delete the category <strong>"{catToDelete.name}"</strong>? 
+              Existing tasks or routines in this category will keep their label but their category setting won't be synced.
+            </p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button variant="danger" fullWidth onClick={handleDeleteConfirm}>
+                Yes, Delete
+              </Button>
+              <Button variant="secondary" fullWidth onClick={() => setCatToDelete(null)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </Card>
   );
 }
@@ -149,6 +208,7 @@ function CategoriesSection() {
 function DailyTimeSection() {
   const { timeCommitments: commitments, addTimeCommitment: addCommitment, deleteTimeCommitment } = useData();
   const [showAdd, setShowAdd] = useState(false);
+  const [commitmentToDelete, setCommitmentToDelete] = useState(null);
 
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -158,10 +218,15 @@ function DailyTimeSection() {
   const [selectedDays, setSelectedDays] = useState(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']);
   const [type, setType] = useState('fixed');
 
-  // Calculate available time for Tuesday
-  const todayDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  // Calculate available time dynamically based on the current day of the week
+  const todayDays = (() => {
+    const dayIndices = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const currentDayName = dayIndices[new Date().getDay()];
+    return [currentDayName];
+  })();
+
   const totalUsed = commitments
-    .filter(c => c.days.some(d => todayDays.includes(d)))
+    .filter(c => c.days.includes(todayDays[0]))
     .reduce((sum, c) => sum + c.durationMinutes, 0);
   const availableMinutes = Math.max(0, 24 * 60 - totalUsed);
   const availableHours = Math.floor(availableMinutes / 60);
@@ -225,7 +290,7 @@ function DailyTimeSection() {
               </p>
             </div>
             <button
-              onClick={() => deleteTimeCommitment(c.id)}
+              onClick={() => setCommitmentToDelete(c)}
               style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '4px' }}
               title="Delete commitment"
             >
@@ -234,6 +299,39 @@ function DailyTimeSection() {
           </div>
         ))}
       </div>
+
+      {commitmentToDelete && (
+        <Modal
+          isOpen={!!commitmentToDelete}
+          onClose={() => setCommitmentToDelete(null)}
+          title="Delete Commitment"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+              Are you sure you want to delete the daily time commitment <strong>"{commitmentToDelete.name}"</strong>?
+            </p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button
+                variant="danger"
+                fullWidth
+                onClick={() => {
+                  deleteTimeCommitment(commitmentToDelete.id);
+                  setCommitmentToDelete(null);
+                }}
+              >
+                Yes, Delete
+              </Button>
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => setCommitmentToDelete(null)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add Time Commitment">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>

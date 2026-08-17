@@ -21,7 +21,10 @@ function MainRouter() {
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
 
   // Today tracker date constant matching app design
-  const todayStr = '2026-08-11'; 
+  const todayStr = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
 
   // Auth Guard: If user is not logged in and hasn't chosen Demo mode, show Login screen
   if (!currentUser && !demoMode) {

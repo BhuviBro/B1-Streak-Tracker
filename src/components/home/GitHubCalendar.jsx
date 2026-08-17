@@ -15,7 +15,7 @@ function getFirstDayOfMonth(year, month) {
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
-export function GitHubCalendar({ view = 'monthly', currentDate = new Date('2026-08-11'), routines, tasks }) {
+export function GitHubCalendar({ view = 'monthly', currentDate = new Date(), routines, tasks }) {
   const activityMap = buildActivityMap(routines, tasks);
   const [offset, setOffset] = useState(0);
 
@@ -59,7 +59,10 @@ export function GitHubCalendar({ view = 'monthly', currentDate = new Date('2026-
             const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
             const activity = activityMap[dateStr];
             const level = activity ? getContribLevel(activity.required, activity.completed) : 'neutral';
-            const isToday = dateStr === '2026-08-11';
+            const isToday = dateStr === (() => {
+              const d = new Date();
+              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            })();
 
             return (
               <div
@@ -121,7 +124,10 @@ export function GitHubCalendar({ view = 'monthly', currentDate = new Date('2026-
             const dateStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
             const activity = activityMap[dateStr];
             const level = activity ? getContribLevel(activity.required, activity.completed) : 'neutral';
-            const isToday = dateStr === '2026-08-11';
+            const isToday = dateStr === (() => {
+              const d = new Date();
+              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            })();
             return (
               <div key={dateStr} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                 <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>

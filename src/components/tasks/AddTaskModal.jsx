@@ -11,10 +11,20 @@ const PRIORITIES = [
   { id: 'Low', color: '#58a6ff' },
 ];
 
+const getOffsetDateStr = (offset) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export function AddTaskModal({ isOpen, onClose, defaultDate }) {
+  const todayStr = getOffsetDateStr(0);
+  const tomorrowStr = getOffsetDateStr(1);
+  const dayAfterTomorrowStr = getOffsetDateStr(2);
+
   const { categories, addTask } = useData();
   const [title, setTitle] = useState('');
-  const [selectedDate, setSelectedDate] = useState(defaultDate || '2026-08-11');
+  const [selectedDate, setSelectedDate] = useState(defaultDate || todayStr);
   const [priority, setPriority] = useState('Medium');
   const [category, setCategory] = useState(categories[0]?.name || 'Study');
   const [notes, setNotes] = useState('');
@@ -25,8 +35,8 @@ export function AddTaskModal({ isOpen, onClose, defaultDate }) {
   }, [defaultDate, isOpen]);
 
   const dateOptions = [
-    { label: 'Today', value: '2026-08-11' },
-    { label: 'Tomorrow', value: '2026-08-12' },
+    { label: 'Today', value: todayStr },
+    { label: 'Tomorrow', value: tomorrowStr },
     { label: 'Pick Date', value: 'custom' },
   ];
 
@@ -41,7 +51,7 @@ export function AddTaskModal({ isOpen, onClose, defaultDate }) {
     if (!title.trim()) return;
     addTask({
       title: title.trim(),
-      scheduledDate: selectedDate === 'custom' ? '2026-08-11' : selectedDate,
+      scheduledDate: selectedDate === 'custom' ? todayStr : selectedDate,
       priority,
       category,
       reminder,
@@ -78,8 +88,8 @@ export function AddTaskModal({ isOpen, onClose, defaultDate }) {
                 type="button"
                 onClick={() => {
                   if (opt.value === 'custom') {
-                    if (selectedDate === '2026-08-11' || selectedDate === '2026-08-12') {
-                      setSelectedDate('2026-08-13');
+                    if (selectedDate === todayStr || selectedDate === tomorrowStr) {
+                      setSelectedDate(dayAfterTomorrowStr);
                     }
                   } else {
                     setSelectedDate(opt.value);
@@ -88,16 +98,16 @@ export function AddTaskModal({ isOpen, onClose, defaultDate }) {
                 style={{
                   flex: 1, padding: '8px', borderRadius: 'var(--radius-sm)', fontSize: '13px', cursor: 'pointer',
                   border: `1px solid ${
-                    (opt.value === 'custom' && selectedDate !== '2026-08-11' && selectedDate !== '2026-08-12') || selectedDate === opt.value
+                    (opt.value === 'custom' && selectedDate !== todayStr && selectedDate !== tomorrowStr) || selectedDate === opt.value
                       ? 'var(--accent-green-400)'
                       : 'var(--border-color)'
                   }`,
                   backgroundColor:
-                    (opt.value === 'custom' && selectedDate !== '2026-08-11' && selectedDate !== '2026-08-12') || selectedDate === opt.value
+                    (opt.value === 'custom' && selectedDate !== todayStr && selectedDate !== tomorrowStr) || selectedDate === opt.value
                       ? 'rgba(46,160,67,0.1)'
                       : 'var(--bg-primary)',
                   color:
-                    (opt.value === 'custom' && selectedDate !== '2026-08-11' && selectedDate !== '2026-08-12') || selectedDate === opt.value
+                    (opt.value === 'custom' && selectedDate !== todayStr && selectedDate !== tomorrowStr) || selectedDate === opt.value
                       ? 'var(--accent-green-400)'
                       : 'var(--text-secondary)',
                   fontWeight: 600, transition: 'all 0.15s ease'
@@ -107,7 +117,7 @@ export function AddTaskModal({ isOpen, onClose, defaultDate }) {
               </button>
             ))}
           </div>
-          {selectedDate !== '2026-08-11' && selectedDate !== '2026-08-12' && (
+          {selectedDate !== todayStr && selectedDate !== tomorrowStr && (
             <CustomDatePicker
               value={selectedDate}
               onChange={newDate => setSelectedDate(newDate)}

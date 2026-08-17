@@ -185,7 +185,10 @@ export function HomeScreen({ onNavigate }) {
     return () => clearInterval(interval);
   }, []);
 
-  const todayStr = '2026-08-11';
+  const todayStr = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
 
   // Unified today list: tasks + routine occurrences
   const todayTasks = tasks.filter(t => t.scheduledDate === todayStr);
@@ -222,7 +225,7 @@ export function HomeScreen({ onNavigate }) {
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '3px' }}>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              Tuesday, 11 August 2026
+              {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
             <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--text-tertiary)', flexShrink: 0 }} />
             <p style={{ fontSize: '13px', color: 'var(--accent-green-400)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
@@ -289,7 +292,7 @@ export function HomeScreen({ onNavigate }) {
 
           {/* GitHub Calendar */}
           <Card>
-            <GitHubCalendar view={calView} currentDate={new Date('2026-08-11')} routines={routines} tasks={tasks} />
+            <GitHubCalendar view={calView} currentDate={new Date()} routines={routines} tasks={tasks} />
           </Card>
         </>
       )}
