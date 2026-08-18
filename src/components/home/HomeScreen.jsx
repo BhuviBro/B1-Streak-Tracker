@@ -6,7 +6,7 @@ import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { Flame, Clock, BarChart3, CalendarDays, FileText, Edit2 } from 'lucide-react';
+import { Flame, Clock, BarChart3, CalendarDays, FileText, Edit2, Plus } from 'lucide-react';
 
 function getTimeRemaining() {
   const now = new Date();
