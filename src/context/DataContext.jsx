@@ -163,15 +163,21 @@ export function DataProvider({ children }) {
 
       if (action.type === 'today' || action.type === 'reschedule') {
         const targetDate = action.type === 'today' ? targetTodayDate : action.date;
-        const originalDateParts = t.scheduledDate.split('-');
-        const formattedOrigDate = originalDateParts.length === 3
-          ? `${originalDateParts[2]}/${originalDateParts[1]}/${originalDateParts[0].slice(-2)}`
-          : t.scheduledDate;
+        
+        let newTitle = t.title;
+        // If task is already a rolled-over task, do not duplicate prefix or append date again
+        if (!newTitle.startsWith('[RollOver]:')) {
+          const originalDateParts = t.scheduledDate.split('-');
+          const formattedOrigDate = originalDateParts.length === 3
+            ? `${originalDateParts[2]}/${originalDateParts[1]}/${originalDateParts[0].slice(-2)}`
+            : t.scheduledDate;
+          newTitle = `[RollOver]: ${t.title} [${formattedOrigDate}]`;
+        }
 
         // Create new rollover task
         const rolledOverTask = {
           id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-          title: `[RollOver]: ${t.title} [${formattedOrigDate}]`,
+          title: newTitle,
           scheduledDate: targetDate,
           createdAt: new Date().toISOString(),
           completed: false,

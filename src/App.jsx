@@ -33,8 +33,8 @@ function MainRouter() {
 
   // Scan for past incomplete tasks
   const overdueIncompleteTasks = tasks.filter(t => {
-    // If task is completed or cancelled, ignore
-    if (t.completed || t.cancelled) return false;
+    // If task is completed, cancelled, or already rolled over, ignore
+    if (t.completed || t.cancelled || t.rolledOver) return false;
     // If task scheduledDate is in the past compared to todayStr, it is overdue
     return t.scheduledDate < todayStr;
   });
