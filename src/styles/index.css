@@ -28,7 +28,7 @@
   --accent-green-hover: #3fb950;
   
   /* Contribution Levels (Dark Mode) */
-  --contrib-level-0: #161b22; /* Empty / Neutral */
+  --contrib-level-0: #0d1117; /* Least graded / Empty / Black */
   --contrib-level-1: #0e4429; /* Light green */
   --contrib-level-2: #006d32; /* Low-medium green */
   --contrib-level-3: #26a641; /* Medium green */
@@ -73,7 +73,7 @@
   --border-muted: #e1e4e8;
   
   /* Contribution Levels (Light Mode) */
-  --contrib-level-0: #ebedf0; /* Empty / Neutral */
+  --contrib-level-0: #24292f; /* Least graded / Empty / Black */
   --contrib-level-1: #9be9a8; /* Light green */
   --contrib-level-2: #40c463; /* Low-medium green */
   --contrib-level-3: #30a14e; /* Medium green */

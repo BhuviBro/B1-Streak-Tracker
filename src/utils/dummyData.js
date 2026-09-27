@@ -60,6 +60,17 @@ export const INITIAL_MOCK_TASKS = [
     category: "Health",
     reminder: "06:00 PM",
     notes: "Leg day workout routine."
+  },
+  {
+    id: "task-future-1",
+    title: "Review Design Systems",
+    scheduledDate: getOffsetDateStr(2),
+    completed: false,
+    completedAt: null,
+    priority: "Medium",
+    category: "Coding",
+    reminder: "10:00 AM",
+    notes: "Review atomic design principles."
   }
 ];
 
@@ -84,7 +95,7 @@ export const INITIAL_MOCK_ROUTINES = [
       [getOffsetDateStr(-7)]: false,
       [getOffsetDateStr(-6)]: true,
       [getOffsetDateStr(-5)]: true,
-      [getOffsetDateStr(-4)]: true,
+      [getOffsetDateStr(-4)]: false,
       [getOffsetDateStr(-3)]: true,
       [getOffsetDateStr(-2)]: true,
       [getOffsetDateStr(-1)]: true,
@@ -100,10 +111,10 @@ export const INITIAL_MOCK_ROUTINES = [
     status: "active",
     currentStreak: 5,
     bestStreak: 10,
-    completedDays: 15,
-    missedDays: 2,
+    completedDays: 14,
+    missedDays: 3,
     daysRemaining: 30,
-    consistency: 88.2,
+    consistency: 82.4,
     completions: {
       [getOffsetDateStr(-10)]: true,
       [getOffsetDateStr(-9)]: true,
@@ -111,7 +122,7 @@ export const INITIAL_MOCK_ROUTINES = [
       [getOffsetDateStr(-7)]: true,
       [getOffsetDateStr(-6)]: true,
       [getOffsetDateStr(-5)]: false,
-      [getOffsetDateStr(-4)]: true,
+      [getOffsetDateStr(-4)]: false,
       [getOffsetDateStr(-3)]: true,
       [getOffsetDateStr(-2)]: true,
       [getOffsetDateStr(-1)]: true,
@@ -127,10 +138,10 @@ export const INITIAL_MOCK_ROUTINES = [
     status: "active",
     currentStreak: 8,
     bestStreak: 11,
-    completedDays: 14,
-    missedDays: 2,
+    completedDays: 13,
+    missedDays: 3,
     daysRemaining: 14,
-    consistency: 87.5,
+    consistency: 81.3,
     completions: {
       [getOffsetDateStr(-10)]: true,
       [getOffsetDateStr(-9)]: true,
@@ -138,7 +149,7 @@ export const INITIAL_MOCK_ROUTINES = [
       [getOffsetDateStr(-7)]: true,
       [getOffsetDateStr(-6)]: true,
       [getOffsetDateStr(-5)]: true,
-      [getOffsetDateStr(-4)]: true,
+      [getOffsetDateStr(-4)]: false,
       [getOffsetDateStr(-3)]: true,
       [getOffsetDateStr(-2)]: false,
       [getOffsetDateStr(-1)]: true,

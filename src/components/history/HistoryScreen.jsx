@@ -66,7 +66,7 @@ export function HistoryScreen() {
     const done = tList.filter(t => t.completed).length
                + rList.filter(r => r.completions?.[dateStr]).length;
     const rate = done / total;
-    if (rate === 0) return 'var(--bg-tertiary)';
+    if (rate === 0) return 'var(--contrib-level-0)';
     if (rate < 0.25) return 'var(--contrib-level-1)';
     if (rate < 0.5)  return 'var(--contrib-level-2)';
     if (rate < 0.75) return 'var(--contrib-level-3)';

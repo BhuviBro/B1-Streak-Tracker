@@ -16,9 +16,13 @@ function getFirstDayOfMonth(year, month) {
 function pad(n) { return String(n).padStart(2, '0'); }
 
 export function GitHubCalendar({ view = 'monthly', currentDate = new Date(), routines, tasks }) {
-  const activityMap = buildActivityMap(routines, tasks);
-  const [offset, setOffset] = useState(0);
+  const todayStr = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  })();
 
+  const activityMap = buildActivityMap(routines, tasks, todayStr);
+  const [offset, setOffset] = useState(0);
 
   if (view === 'monthly') {
     const d = new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1);
@@ -57,22 +61,31 @@ export function GitHubCalendar({ view = 'monthly', currentDate = new Date(), rou
           {cells.map((day, i) => {
             if (!day) return <div key={`empty-${i}`} />;
             const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
+            const isToday = dateStr === todayStr;
+            const isFuture = dateStr > todayStr;
             const activity = activityMap[dateStr];
-            const level = activity ? getContribLevel(activity.required, activity.completed) : 'neutral';
-            const isToday = dateStr === (() => {
-              const d = new Date();
-              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            })();
+            const level = isFuture ? 'neutral' : (activity ? getContribLevel(activity.required, activity.completed, isFuture) : 'neutral');
+            const isZeroCompleted = !isFuture && activity && activity.required > 0 && activity.completed === 0;
 
             return (
               <div
                 key={dateStr}
-                title={`${dateStr}: ${activity ? `${activity.completed}/${activity.required}` : 'No activity'}`}
+                title={
+                  isFuture
+                    ? `${dateStr}: Upcoming / Planned`
+                    : activity
+                    ? `${dateStr}: ${activity.completed}/${activity.required} completed${isZeroCompleted ? ' (0% - Not completed)' : ''}`
+                    : `${dateStr}: No activity`
+                }
                 style={{
                   aspectRatio: '1',
                   borderRadius: '3px',
                   backgroundColor: getCellColor(level),
-                  border: isToday ? '2px solid var(--accent-green-400)' : '1px solid transparent',
+                  border: isToday
+                    ? '2px solid var(--accent-green-400)'
+                    : isZeroCompleted
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : '1px solid transparent',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -93,7 +106,15 @@ export function GitHubCalendar({ view = 'monthly', currentDate = new Date(), rou
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', marginTop: '8px' }}>
           <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>Less</span>
           {[0,1,2,3,4,5].map(l => (
-            <div key={l} style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: l === 0 ? 'var(--contrib-neutral)' : `var(--contrib-level-${l})` }} />
+            <div
+              key={l}
+              title={l === 0 ? '0% / Incomplete (Black)' : `Level ${l}`}
+              style={{
+                width: '10px', height: '10px', borderRadius: '2px',
+                backgroundColor: `var(--contrib-level-${l})`,
+                border: l === 0 ? '1px solid rgba(255,255,255,0.15)' : 'none'
+              }}
+            />
           ))}
           <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>More</span>
         </div>
@@ -122,23 +143,33 @@ export function GitHubCalendar({ view = 'monthly', currentDate = new Date(), rou
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
           {week.map((d) => {
             const dateStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+            const isToday = dateStr === todayStr;
+            const isFuture = dateStr > todayStr;
             const activity = activityMap[dateStr];
-            const level = activity ? getContribLevel(activity.required, activity.completed) : 'neutral';
-            const isToday = dateStr === (() => {
-              const d = new Date();
-              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            })();
+            const level = isFuture ? 'neutral' : (activity ? getContribLevel(activity.required, activity.completed, isFuture) : 'neutral');
+            const isZeroCompleted = !isFuture && activity && activity.required > 0 && activity.completed === 0;
+
             return (
               <div key={dateStr} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                 <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
                   {['Su','Mo','Tu','We','Th','Fr','Sa'][d.getDay()]}
                 </span>
                 <div
-                  title={dateStr}
+                  title={
+                    isFuture
+                      ? `${dateStr}: Upcoming / Planned`
+                      : activity
+                      ? `${dateStr}: ${activity.completed}/${activity.required} completed${isZeroCompleted ? ' (0% - Not completed)' : ''}`
+                      : `${dateStr}: No activity`
+                  }
                   style={{
                     width: '36px', height: '36px', borderRadius: '6px',
                     backgroundColor: getCellColor(level),
-                    border: isToday ? '2px solid var(--accent-green-400)' : '1px solid transparent',
+                    border: isToday
+                      ? '2px solid var(--accent-green-400)'
+                      : isZeroCompleted
+                      ? '1px solid rgba(255, 255, 255, 0.12)'
+                      : '1px solid transparent',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '12px', fontWeight: isToday ? 700 : 500,
                     color: level > 2 ? '#fff' : 'var(--text-secondary)',
@@ -181,11 +212,27 @@ export function GitHubCalendar({ view = 'monthly', currentDate = new Date(), rou
               {cells.map((day, i) => {
                 if (!day) return <div key={`e${i}`} style={{ width: '8px', height: '8px' }} />;
                 const dateStr = `${year}-${pad(month+1)}-${pad(day)}`;
+                const isToday = dateStr === todayStr;
+                const isFuture = dateStr > todayStr;
                 const activity = activityMap[dateStr];
-                const level = activity ? getContribLevel(activity.required, activity.completed) : 'neutral';
+                const level = isFuture ? 'neutral' : (activity ? getContribLevel(activity.required, activity.completed, isFuture) : 'neutral');
+                const isZeroCompleted = !isFuture && activity && activity.required > 0 && activity.completed === 0;
+
                 return (
-                  <div key={dateStr} title={dateStr}
-                    style={{ width: '8px', height: '8px', borderRadius: '1px', backgroundColor: getCellColor(level), cursor: 'pointer' }}
+                  <div key={dateStr}
+                    title={
+                      isFuture
+                        ? `${dateStr}: Upcoming / Planned`
+                        : activity
+                        ? `${dateStr}: ${activity.completed}/${activity.required} completed${isZeroCompleted ? ' (0% - Not completed)' : ''}`
+                        : `${dateStr}: No activity`
+                    }
+                    style={{
+                      width: '8px', height: '8px', borderRadius: '1px',
+                      backgroundColor: getCellColor(level),
+                      border: isZeroCompleted ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+                      cursor: 'pointer'
+                    }}
                   />
                 );
               })}

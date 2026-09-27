@@ -29,8 +29,7 @@ function RoutineCalendar({ routine }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
 
-  const startDate = new Date(routine.startDate);
-  const goalDate = new Date(routine.goalDate);
+  const todayStr = getTodayStr();
 
   const cells = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
@@ -48,11 +47,10 @@ function RoutineCalendar({ routine }) {
         {cells.map((day, i) => {
           if (!day) return <div key={`e${i}`} />;
           const dateStr = `${year}-${pad(month+1)}-${pad(day)}`;
-          const cellDate = new Date(dateStr);
-          const isBeforeStart = cellDate < startDate;
-          const isAfterGoal = cellDate > goalDate;
-          const isFuture = cellDate > today;
-          const isToday = dateStr === getTodayStr();
+          const isBeforeStart = routine.startDate && dateStr < routine.startDate;
+          const isAfterGoal = routine.goalDate && dateStr > routine.goalDate;
+          const isFuture = dateStr > todayStr;
+          const isToday = dateStr === todayStr;
           const doneObj = routine.completions?.[dateStr];
           const done = doneObj === true || (doneObj && doneObj.completed === true);
 
@@ -69,23 +67,27 @@ function RoutineCalendar({ routine }) {
           } else if (done) {
             bg = 'var(--contrib-level-4)';
             textColor = '#fff';
-          } else if (doneObj === false) {
-            bg = 'rgba(248, 81, 73, 0.25)';
+          } else {
+            // Any day not completed within the active routine duration (past missed days or today if not yet completed)
+            bg = 'rgba(248, 81, 73, 0.22)';
             textColor = '#f85149';
+            border = '1px solid rgba(248, 81, 73, 0.45)';
           }
 
-          if (isToday) border = '2px solid var(--accent-green-400)';
+          if (isToday) {
+            border = '2px solid var(--accent-green-400)';
+          }
 
           return (
             <div key={dateStr}
-              title={`${dateStr}: ${isFuture ? 'Future' : done ? 'Completed' : isBeforeStart ? 'N/A' : 'Missed'}`}
+              title={`${dateStr}: ${isFuture ? 'Future' : done ? 'Completed' : isBeforeStart || isAfterGoal ? 'N/A' : 'Not Completed (Missed)'}`}
               style={{
                 aspectRatio: '1', borderRadius: '4px',
                 backgroundColor: bg, border,
                 cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '10px', fontWeight: isToday ? 700 : 500,
-                color: isToday && done !== true ? 'var(--accent-green-400)' : textColor,
+                color: textColor,
               }}
             >
               {day}

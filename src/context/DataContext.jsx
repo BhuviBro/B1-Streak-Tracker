@@ -16,21 +16,18 @@ export function DataProvider({ children }) {
     const cached = localStorage.getItem(LOCAL_STORAGE_CACHE_KEY);
     if (cached) {
       try {
-        return JSON.parse(cached);
+        const parsed = JSON.parse(cached);
+        if ((parsed.tasks && parsed.tasks.length > 0) || (parsed.routines && parsed.routines.length > 0)) {
+          return parsed;
+        }
       } catch (e) {
         console.error('Failed to parse local storage cache', e);
       }
     }
     return {
-      profile: {
-        name: "Guest User",
-        email: "guest@example.com",
-        avatar: "",
-        ongoingStreak: 0,
-        timeRemainingToday: "8h 0m",
-      },
-      tasks: [],
-      routines: [],
+      profile: INITIAL_MOCK_USER,
+      tasks: INITIAL_MOCK_TASKS,
+      routines: INITIAL_MOCK_ROUTINES,
       categories: INITIAL_MOCK_CATEGORIES,
       timeCommitments: INITIAL_MOCK_TIME_COMMITMENTS,
     };
@@ -336,6 +333,17 @@ export function DataProvider({ children }) {
     updateData({ timeCommitments: updatedCommitments });
   };
 
+  const resetToDummyData = () => {
+    const dummyState = {
+      profile: INITIAL_MOCK_USER,
+      tasks: INITIAL_MOCK_TASKS,
+      routines: INITIAL_MOCK_ROUTINES,
+      categories: INITIAL_MOCK_CATEGORIES,
+      timeCommitments: INITIAL_MOCK_TIME_COMMITMENTS,
+    };
+    updateData(dummyState);
+  };
+
   return (
     <DataContext.Provider
       value={{
@@ -361,6 +369,7 @@ export function DataProvider({ children }) {
         addTimeCommitment,
         deleteTimeCommitment,
         updateData,
+        resetToDummyData,
       }}
     >
       {children}

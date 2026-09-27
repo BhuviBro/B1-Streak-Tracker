@@ -6,7 +6,7 @@ import { Modal } from '../common/Modal';
 import { useTheme } from '../../context/ThemeContext';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { User, Moon, Sun, Tag, Bell, Database, Info, LogOut, Plus, Trash2, ChevronRight, X } from 'lucide-react';
+import { User, Moon, Sun, Tag, Bell, Database, Info, LogOut, Plus, Trash2, ChevronRight, X, Sparkles } from 'lucide-react';
 
 function ProfileSection() {
   const { profile: user, updateData } = useData();
@@ -418,9 +418,21 @@ function DailyTimeSection() {
 
 export function SettingsScreen() {
   const { logout } = useAuth();
+  const { resetToDummyData } = useData();
   const [modalContent, setModalContent] = useState(null);
 
   const sections = [
+    {
+      icon: Sparkles,
+      label: 'Load Dummy / Sample Data',
+      sub: 'Reset with habits & tasks for demo',
+      action: () => {
+        if (confirm('Load sample dummy data? This will load habits, tasks and streaks for preview.')) {
+          resetToDummyData();
+          alert('Dummy data loaded successfully! Go to Home or Routines to see it.');
+        }
+      }
+    },
     { icon: Bell, label: 'Reminders', sub: 'Default: 7:00 PM', action: () => setModalContent({ title: 'Reminders', text: 'Configured for daily check-in reminders at 7:00 PM.' }) },
     { icon: Database, label: 'Backup & Sync', sub: 'Firebase Ready', action: () => setModalContent({ title: 'Backup & Sync', text: 'Cloud Firestore synchronization structure configured in Phase 4.' }) },
     { icon: Info, label: 'About', sub: 'Task & Routine Streak Tracker v1.0', action: () => setModalContent({ title: 'About', text: 'GitHub-inspired productivity & habit streak tracker built with React, Vite & Firebase.' }) },
