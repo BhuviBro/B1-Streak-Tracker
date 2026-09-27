@@ -61,9 +61,11 @@ function RoutineCalendar({ routine }) {
           if (isBeforeStart || isAfterGoal) {
             bg = 'transparent';
             textColor = 'var(--text-tertiary)';
+            border = '1px solid var(--border-color)';
           } else if (isFuture) {
             bg = 'var(--bg-tertiary)';
             textColor = 'var(--text-secondary)';
+            border = '1px solid var(--border-color)';
           } else if (done) {
             bg = 'var(--contrib-level-4)';
             textColor = '#fff';
