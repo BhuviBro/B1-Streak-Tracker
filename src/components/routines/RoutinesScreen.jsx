@@ -5,7 +5,7 @@ import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { CustomDatePicker } from '../common/DatePicker';
-import { Plus, Flame, ChevronRight, Calendar } from 'lucide-react';
+import { Plus, Flame, ChevronRight, Calendar, CheckCircle2, RotateCcw } from 'lucide-react';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -100,7 +100,7 @@ function RoutineCalendar({ routine }) {
 }
 
 function RoutineDetailsModal({ routine, onClose }) {
-  const { categories, toggleRoutineStatus, editRoutine, deleteRoutine } = useData();
+  const { categories, toggleRoutineStatus, editRoutine, deleteRoutine, completeRoutine, reactivateRoutine } = useData();
   const [editingGoal, setEditingGoal] = useState(false);
   const [newGoal, setNewGoal] = useState(routine?.goalDate || getFutureDateStr(30));
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -133,8 +133,14 @@ function RoutineDetailsModal({ routine, onClose }) {
     onClose();
   };
 
-  const handleDelete = () => {
-    deleteRoutine(routine.id);
+  const handleCompleteNow = () => {
+    completeRoutine(routine.id);
+    onClose();
+  };
+
+  const handleReactivate = () => {
+    reactivateRoutine(routine.id, newGoal);
+    setEditingGoal(false);
     onClose();
   };
 
@@ -144,9 +150,13 @@ function RoutineDetailsModal({ routine, onClose }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Badge color={catColor}>{routine.category || 'General'}</Badge>
-            <Badge variant={routine.status === 'active' ? 'routine' : 'default'}>
-              {routine.status === 'active' ? 'Active' : 'Paused'}
-            </Badge>
+            {routine.isEnded ? (
+              <Badge color="#2ea043">Completed / Goal Ended</Badge>
+            ) : (
+              <Badge variant={routine.status === 'active' ? 'routine' : 'default'}>
+                {routine.status === 'active' ? 'Active' : 'Paused'}
+              </Badge>
+            )}
           </div>
           <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
             Start: {routine.startDate}
@@ -156,12 +166,12 @@ function RoutineDetailsModal({ routine, onClose }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           {[
             { label: 'Start Date', value: routine.startDate, color: 'var(--text-secondary)' },
-            { label: 'Goal Date', value: routine.goalDate, color: 'var(--text-secondary)' },
-            { label: '🔥 Current Streak', value: `${routine.currentStreak} Days`, color: '#f85149' },
+            { label: 'Goal Date', value: routine.goalDate || 'N/A', color: 'var(--text-secondary)' },
+            { label: '🔥 Current Streak', value: routine.isEnded ? '0 Days (Ended)' : `${routine.currentStreak} Days`, color: '#f85149' },
             { label: '🏆 Best Streak', value: `${routine.bestStreak} Days`, color: '#d29922' },
             { label: '✅ Completed Days', value: `${routine.completedDays}`, color: 'var(--accent-green-400)' },
             { label: '❌ Missed Days', value: `${routine.missedDays}`, color: 'var(--status-danger)' },
-            { label: '📅 Days Remaining', value: `${routine.daysRemaining}`, color: 'var(--status-info)' },
+            { label: '📅 Days Remaining', value: routine.isEnded ? '0 (Completed)' : `${routine.daysRemaining}`, color: 'var(--status-info)' },
             { label: '📊 Consistency', value: `${routine.consistency?.toFixed(1) || 100}%`, color: 'var(--accent-green-400)' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ backgroundColor: 'var(--bg-tertiary)', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
@@ -174,9 +184,11 @@ function RoutineDetailsModal({ routine, onClose }) {
         {/* Progress */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Progress</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              {routine.isEnded ? 'Final Consistency & Completion' : 'Progress'}
+            </span>
             <span style={{ fontSize: '12px', color: 'var(--accent-green-400)', fontWeight: 600 }}>
-              {routine.completedDays} / {totalDays} Days
+              {routine.completedDays} / {totalDays} Days ({routine.consistency?.toFixed(1) || 100}%)
             </span>
           </div>
           <div style={{ height: '8px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '99px', overflow: 'hidden' }}>
@@ -191,26 +203,46 @@ function RoutineDetailsModal({ routine, onClose }) {
         {/* Edit Goal Inline with Themed Calendar */}
         {editingGoal ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
-            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Select New Goal Date</label>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              {routine.isEnded ? 'Select New Extended Goal Date' : 'Select New Goal Date'}
+            </label>
             <CustomDatePicker value={newGoal} onChange={setNewGoal} />
             <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-              <Button variant="primary" size="sm" onClick={handleSaveGoal} fullWidth>Save New Goal</Button>
+              <Button variant="primary" size="sm" onClick={routine.isEnded ? handleReactivate : handleSaveGoal} fullWidth>
+                {routine.isEnded ? 'Save & Reactivate' : 'Save New Goal'}
+              </Button>
               <Button variant="secondary" size="sm" onClick={() => setEditingGoal(false)} fullWidth>Cancel</Button>
             </div>
           </div>
         ) : null}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button variant="secondary" fullWidth onClick={handlePause}>
-            {routine.status === 'active' ? 'Pause' : 'Resume'}
-          </Button>
-          <Button variant="secondary" fullWidth onClick={() => setEditingGoal(!editingGoal)}>
-            Edit Goal
-          </Button>
-          <Button variant="danger" fullWidth onClick={handleDeleteClick}>
-            Delete
-          </Button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {routine.isEnded ? (
+            <>
+              <Button variant="primary" style={{ flex: 2 }} onClick={() => setEditingGoal(!editingGoal)} icon={RotateCcw}>
+                Reactivate / Extend Goal
+              </Button>
+              <Button variant="danger" style={{ flex: 1 }} onClick={handleDeleteClick}>
+                Delete
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="secondary" style={{ flex: 1 }} onClick={handlePause}>
+                {routine.status === 'active' ? 'Pause' : 'Resume'}
+              </Button>
+              <Button variant="secondary" style={{ flex: 1 }} onClick={() => setEditingGoal(!editingGoal)}>
+                Edit Goal
+              </Button>
+              <Button variant="primary" style={{ flex: 1 }} icon={CheckCircle2} onClick={handleCompleteNow}>
+                Complete
+              </Button>
+              <Button variant="danger" style={{ flex: 1 }} onClick={handleDeleteClick}>
+                Delete
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -243,6 +275,7 @@ export function RoutinesScreen() {
   const { routines, categories, addRoutine } = useData();
   const [selectedRoutine, setSelectedRoutine] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'completed'
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState(categories[0]?.name || 'Coding');
@@ -267,6 +300,10 @@ export function RoutinesScreen() {
     setShowAddModal(false);
   };
 
+  const activeRoutines = routines.filter(r => !r.isEnded && r.status !== 'completed');
+  const completedRoutines = routines.filter(r => r.isEnded || r.status === 'completed');
+  const displayedRoutines = activeTab === 'active' ? activeRoutines : completedRoutines;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
@@ -281,25 +318,94 @@ export function RoutinesScreen() {
         </Button>
       </div>
 
+      {/* Routine Sub-tabs (Active vs Completed) */}
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+        <button
+          type="button"
+          id="tab-active-routines"
+          onClick={() => setActiveTab('active')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '7px 14px', borderRadius: 'var(--radius-sm)',
+            backgroundColor: activeTab === 'active' ? 'var(--bg-tertiary)' : 'transparent',
+            color: activeTab === 'active' ? 'var(--text-primary)' : 'var(--text-secondary)',
+            fontWeight: 600, fontSize: '13px',
+            border: activeTab === 'active' ? '1px solid var(--border-color)' : '1px solid transparent',
+            cursor: 'pointer', transition: 'all 0.15s ease'
+          }}
+        >
+          <span>Active</span>
+          <span style={{
+            fontSize: '11px', fontWeight: 700, padding: '2px 7px', borderRadius: '99px',
+            backgroundColor: activeTab === 'active' ? 'var(--accent-green-500)' : 'var(--bg-secondary)',
+            color: activeTab === 'active' ? '#fff' : 'var(--text-tertiary)'
+          }}>
+            {activeRoutines.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          id="tab-completed-routines"
+          onClick={() => setActiveTab('completed')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '7px 14px', borderRadius: 'var(--radius-sm)',
+            backgroundColor: activeTab === 'completed' ? 'var(--bg-tertiary)' : 'transparent',
+            color: activeTab === 'completed' ? 'var(--text-primary)' : 'var(--text-secondary)',
+            fontWeight: 600, fontSize: '13px',
+            border: activeTab === 'completed' ? '1px solid var(--border-color)' : '1px solid transparent',
+            cursor: 'pointer', transition: 'all 0.15s ease'
+          }}
+        >
+          <CheckCircle2 size={15} color={activeTab === 'completed' ? 'var(--accent-green-400)' : 'var(--text-tertiary)'} />
+          <span>Completed</span>
+          <span style={{
+            fontSize: '11px', fontWeight: 700, padding: '2px 7px', borderRadius: '99px',
+            backgroundColor: activeTab === 'completed' ? 'var(--accent-green-500)' : 'var(--bg-secondary)',
+            color: activeTab === 'completed' ? '#fff' : 'var(--text-tertiary)'
+          }}>
+            {completedRoutines.length}
+          </span>
+        </button>
+      </div>
+
       {/* Routine Cards */}
-      {routines.map(routine => (
+      {displayedRoutines.map(routine => (
         <Card key={routine.id} hoverable onClick={() => setSelectedRoutine(routine)}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{routine.title}</h3>
-                {routine.status === 'paused' && <Badge>Paused</Badge>}
+                {routine.isEnded ? (
+                  <Badge color="#2ea043">Completed</Badge>
+                ) : (
+                  routine.status === 'paused' && <Badge>Paused</Badge>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                 <Badge color={getCategoryColor(routine.category)}>{routine.category || 'General'}</Badge>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Goal: {routine.goalDate}</span>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  {routine.isEnded ? `Ended: ${routine.goalDate || 'Done'}` : `Goal: ${routine.goalDate}`}
+                </span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Flame size={16} color="#f85149" />
-              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                {routine.currentStreak}d
-              </span>
+              {routine.isEnded ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }} title="Best streak achieved">
+                  <span style={{ fontSize: '14px' }}>🏆</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#d29922' }}>
+                    {routine.bestStreak}d best
+                  </span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }} title="Current streak">
+                  <Flame size={16} color="#f85149" />
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {routine.currentStreak}d
+                  </span>
+                </div>
+              )}
               <ChevronRight size={14} color="var(--text-tertiary)" />
             </div>
           </div>
@@ -315,21 +421,35 @@ export function RoutinesScreen() {
                 ❌ <strong>{routine.missedDays}</strong> missed
               </span>
             </div>
-            <span style={{ fontSize: '12px', color: 'var(--status-info)' }}>
-              {routine.daysRemaining}d left
-            </span>
+            {routine.isEnded ? (
+              <span style={{ fontSize: '12px', color: 'var(--accent-green-400)', fontWeight: 600 }}>
+                📊 {routine.consistency?.toFixed(1) || 100}% consistency
+              </span>
+            ) : (
+              <span style={{ fontSize: '12px', color: 'var(--status-info)' }}>
+                {routine.daysRemaining}d left
+              </span>
+            )}
           </div>
         </Card>
       ))}
 
-      {routines.length === 0 && (
+      {displayedRoutines.length === 0 && (
         <Card style={{ textAlign: 'center', padding: '32px 16px' }}>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-            No routines created yet. Start a new consistency goal!
-          </p>
-          <Button variant="primary" icon={Plus} onClick={() => setShowAddModal(true)}>
-            Create First Routine
-          </Button>
+          {activeTab === 'active' ? (
+            <>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                No active routines right now. Start a new consistency goal!
+              </p>
+              <Button variant="primary" icon={Plus} onClick={() => setShowAddModal(true)}>
+                Create First Routine
+              </Button>
+            </>
+          ) : (
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+              No completed routines yet. Keep building consistency until your goal date ends or mark a routine as completed!
+            </p>
+          )}
         </Card>
       )}
 

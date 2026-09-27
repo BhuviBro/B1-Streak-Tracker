@@ -3,6 +3,7 @@ import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
 import { INITIAL_MOCK_USER, INITIAL_MOCK_TASKS, INITIAL_MOCK_ROUTINES, INITIAL_MOCK_CATEGORIES, INITIAL_MOCK_TIME_COMMITMENTS } from '../utils/dummyData';
+import { calculateRoutineStats } from '../utils/calendarUtils';
 
 const DataContext = createContext();
 
@@ -212,6 +213,11 @@ export function DataProvider({ children }) {
   // -------------------------------------------------------------
 
   const toggleRoutineCompletion = (routineId, dateStr) => {
+    const todayStr = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    })();
+
     const updatedRoutines = (data.routines || []).map((r) => {
       if (r.id === routineId) {
         const completions = { ...(r.completions || {}) };
@@ -227,37 +233,46 @@ export function DataProvider({ children }) {
           completions[dateStr] = false;
         }
 
-        // Recalculate streak & counts dynamically
-        const dates = Object.keys(completions).sort();
-        let currentStreak = 0;
-        let bestStreak = r.bestStreak || 0;
-        let completedDays = 0;
-        let missedDays = 0;
-
-        dates.forEach((d) => {
-          const isDone = completions[d] === true || (completions[d] && completions[d].completed === true);
-          if (isDone) {
-            completedDays += 1;
-            currentStreak += 1;
-            if (currentStreak > bestStreak) bestStreak = currentStreak;
-          } else {
-            missedDays += 1;
-            currentStreak = 0;
-          }
-        });
+        const stats = calculateRoutineStats({ ...r, completions }, todayStr);
 
         return {
           ...r,
           completions,
-          currentStreak,
-          bestStreak,
-          completedDays,
-          missedDays,
+          currentStreak: stats.currentStreak,
+          bestStreak: stats.bestStreak,
+          completedDays: stats.completedDays,
+          missedDays: stats.missedDays,
+          daysRemaining: stats.daysRemaining,
+          consistency: stats.consistency,
         };
       }
       return r;
     });
 
+    updateData({ routines: updatedRoutines });
+  };
+
+  const completeRoutine = (routineId) => {
+    const updatedRoutines = (data.routines || []).map((r) => {
+      if (r.id === routineId) {
+        return { ...r, status: 'completed' };
+      }
+      return r;
+    });
+    updateData({ routines: updatedRoutines });
+  };
+
+  const reactivateRoutine = (routineId, newGoalDate) => {
+    const updatedRoutines = (data.routines || []).map((r) => {
+      if (r.id === routineId) {
+        return {
+          ...r,
+          status: 'active',
+          goalDate: newGoalDate || r.goalDate,
+        };
+      }
+      return r;
+    });
     updateData({ routines: updatedRoutines });
   };
 
@@ -344,12 +359,32 @@ export function DataProvider({ children }) {
     updateData(dummyState);
   };
 
+  const todayStr = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
+
+  // Enrich routines dynamically based on current real-time date
+  const enrichedRoutines = (data.routines || []).map(r => {
+    const stats = calculateRoutineStats(r, todayStr);
+    return {
+      ...r,
+      currentStreak: stats.currentStreak,
+      bestStreak: stats.bestStreak,
+      completedDays: stats.completedDays,
+      missedDays: stats.missedDays,
+      daysRemaining: stats.daysRemaining,
+      consistency: stats.consistency,
+      isEnded: stats.isEnded,
+    };
+  });
+
   return (
     <DataContext.Provider
       value={{
         data,
         tasks: data.tasks || [],
-        routines: data.routines || [],
+        routines: enrichedRoutines,
         categories: data.categories || [],
         timeCommitments: data.timeCommitments || [],
         profile: data.profile || INITIAL_MOCK_USER,
@@ -364,6 +399,8 @@ export function DataProvider({ children }) {
         deleteRoutine,
         toggleRoutineStatus,
         toggleRoutineCompletion,
+        completeRoutine,
+        reactivateRoutine,
         addCategory,
         deleteCategory,
         addTimeCommitment,

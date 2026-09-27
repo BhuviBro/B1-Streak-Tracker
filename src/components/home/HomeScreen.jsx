@@ -190,9 +190,14 @@ export function HomeScreen({ onNavigate }) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   })();
 
-  // Unified today list: tasks + routine occurrences
+  // Unified today list: tasks + routine occurrences (only active, non-ended routines)
   const todayTasks = tasks.filter(t => t.scheduledDate === todayStr);
-  const todayRoutines = routines.filter(r => r.status === 'active');
+  const todayRoutines = routines.filter(r => {
+    const isActive = r.status === 'active';
+    const notEnded = !r.isEnded && (!r.goalDate || todayStr <= r.goalDate);
+    const hasStarted = !r.startDate || todayStr >= r.startDate;
+    return isActive && notEnded && hasStarted;
+  });
 
   const getCategoryColor = (catName) => {
     const cat = categories.find(c => c.name === catName);
